@@ -1,0 +1,95 @@
+#root {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+}
+
+.logo {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 220px;
+  height: auto;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+@media (max-width: 768px) {
+  .logo {
+    width: 180px;
+    top: 25px;
+  }
+}
+
+.globe-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  cursor: grab;
+}
+
+.globe-container:active {
+  cursor: grabbing;
+}
+
+.stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1),
+    2px 2px 2px rgba(255, 255, 255, 0.1), 4px 4px 4px rgba(255, 255, 255, 0.1),
+    8px 8px 8px rgba(255, 255, 255, 0.1);
+  animation: sparkle 5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* Label card styles */
+div[style*="position: absolute"] > div {
+  background: rgba(33, 33, 33, 0.95) !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.3px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  min-width: 80px !important;
+  text-align: center !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Hover tooltip */
+:global(.scene-tooltip) {
+  background: rgba(33, 33, 33, 0.95) !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+  pointer-events: none !important;
+  transform: translate3d(0, 0, 0) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
