@@ -285,7 +285,7 @@ function Earth({ locations }: EarthProps) {
     controls.maxDistance = getResponsiveCameraZ() + 6;
     controls.enablePan = false;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = window.innerWidth <= 768 ? 0.6 : 0.8; // Faster rotation, adjusted for mobile/desktop
+    controls.autoRotateSpeed = window.innerWidth <= 768 ? 0.4 : 0.6; // rotation speed, adjusted for mobile/desktop
 
     // Enable controls after animation
     controls.enabled = false;

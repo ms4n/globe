@@ -1,8 +1,9 @@
-import { useEffect, useRef, memo } from "react";
+import { useEffect, useRef, memo, useState, useCallback } from "react";
 import * as d3 from "d3";
 import * as topojson from "topojson-client";
-import { Feature, FeatureCollection, GeoJsonProperties } from "geojson";
+import { FeatureCollection, GeoJsonProperties } from "geojson";
 import { TripLocation } from "../data/locations";
+import TripCard from "./TripCard";
 
 interface MapProps {
   width: number;
@@ -13,55 +14,67 @@ interface MapProps {
     highlight: string;
     stroke: string;
   };
-  onHover: (trip: TripLocation | null, x: number, y: number) => void;
   locations: TripLocation[];
 }
 
-function Map({ width, height, theme, onHover, locations }: MapProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
+function Map({ width, height, theme, locations }: MapProps) {
+  const mapRef = useRef<SVGSVGElement>(null);
+  const [activeTrip, setActiveTrip] = useState<{
+    trip: TripLocation;
+    position: { x: number; y: number };
+  } | null>(null);
+
+  // Memoize the projection setup to prevent unnecessary recalculations
+  const setupProjection = useCallback(() => {
+    const isMobile = width <= 768;
+    return d3
+      .geoMercator()
+      .scale(isMobile ? width * 0.5 : width * 0.4)
+      .center(isMobile ? [95, 10] : [95, 20])
+      .translate([width / 2, height / 2]);
+  }, [width, height]);
+
+  // Handle marker interactions
+  const handleMarkerInteraction = useCallback(
+    (event: MouseEvent | TouchEvent, trip: TripLocation | null) => {
+      if (trip) {
+        const { clientX, clientY } =
+          event instanceof TouchEvent ? event.touches[0] : event;
+        setActiveTrip({
+          trip,
+          position: { x: clientX + 20, y: clientY - 20 },
+        });
+      } else {
+        setActiveTrip(null);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    if (!svgRef.current) return;
+    if (!mapRef.current) return;
 
-    const svg = d3.select(svgRef.current);
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const isMobile = width <= 768;
-
-    // Clear previous content
+    const svg = d3.select(mapRef.current);
     svg.selectAll("*").remove();
 
-    // Create container for zoom
-    const container = svg.append("g");
+    // Create main container group
+    const container = svg.append("g").attr("class", "map-container");
 
-    // Increase scale and adjust center for mobile
-    const projection = d3
-      .geoMercator()
-      .scale(isMobile ? width * 0.85 : width * 0.45)
-      .center(isMobile ? [80, 20] : [100, 20])
-      .translate([width / 2, height / 2]);
-
+    // Setup projection and path generator
+    const projection = setupProjection();
     const path = d3.geoPath(projection);
 
-    // Add zoom behavior
+    // Setup zoom behavior
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, isMobile ? 8 : 4])
+      .scaleExtent([1, 8])
       .on("zoom", (event) => {
         container.attr("transform", event.transform);
       });
 
     svg.call(zoom);
 
-    // If mobile, set initial zoom
-    if (isMobile) {
-      svg.call(
-        zoom.transform,
-        d3.zoomIdentity.translate(width * 0.1, 0).scale(1.2)
-      );
-    }
-
-    // Load and render map
+    // Load and render world map
     fetch("https://unpkg.com/world-atlas@2/countries-110m.json")
       .then((response) => response.json())
       .then((data) => {
@@ -70,83 +83,130 @@ function Map({ width, height, theme, onHover, locations }: MapProps) {
           data.objects.countries
         ) as unknown as FeatureCollection<any, GeoJsonProperties>;
 
-        // Add graticules for better visual reference
-        const graticule = d3.geoGraticule();
+        // Draw countries
         container
-          .append("path")
-          .datum(graticule as unknown as Feature)
-          .attr("class", "graticule")
-          .attr("d", path)
-          .attr("fill", "none")
-          .attr("stroke", theme.stroke)
-          .attr("stroke-width", 0.3)
-          .attr("stroke-opacity", 0.5);
-
-        container
-          .selectAll<SVGPathElement, Feature<any, GeoJsonProperties>>(
-            "path.country"
-          )
+          .append("g")
+          .attr("class", "countries")
+          .selectAll("path")
           .data(geojson.features)
           .join("path")
-          .attr("class", "country")
           .attr("d", path)
           .attr("fill", (d) => {
             const countryName = d.properties?.name;
-            if (
-              ["Czech Republic", "Switzerland", "Germany"].includes(countryName)
-            )
-              return theme.highlight;
-            if (
-              ["Thailand", "Vietnam", "India", "Indonesia"].includes(
-                countryName
-              )
-            )
-              return theme.highlight;
-            return theme.mapBackground;
+            return [
+              "Czech Republic",
+              "Switzerland",
+              "Germany",
+              "Thailand",
+              "Vietnam",
+              "India",
+              "Indonesia",
+            ].includes(countryName)
+              ? theme.highlight
+              : theme.mapBackground;
           })
           .attr("stroke", theme.stroke)
           .attr("stroke-width", 0.5);
 
-        // Add location markers
-        container
-          .selectAll<SVGCircleElement, TripLocation>("circle.location")
+        // Create markers container
+        const markers = container
+          .append("g")
+          .attr("class", "markers")
+          .selectAll("g")
           .data(locations)
-          .join("circle")
-          .attr("class", "location")
-          .attr("cx", (d) => {
-            const coords = projection([d.location.lng, d.location.lat]);
-            return coords ? coords[0] : 0;
+          .join("g")
+          .attr("class", "marker-group")
+          .attr("transform", (d) => {
+            const [x, y] = projection([d.location.lng, d.location.lat]) || [
+              0, 0,
+            ];
+            return `translate(${x},${y})`;
+          });
+
+        // Add pulse circles
+        markers.append("circle").attr("class", "marker-pulse").attr("r", 12);
+
+        // Add marker circles
+        markers
+          .append("circle")
+          .attr("class", "marker-point")
+          .attr("r", 6)
+          .on(
+            "mouseenter",
+            function (
+              this: SVGCircleElement,
+              event: MouseEvent,
+              d: TripLocation
+            ) {
+              d3.select(this.parentElement as Element)
+                .raise()
+                .select(".marker-point")
+                .transition()
+                .duration(200)
+                .attr("r", 8);
+              handleMarkerInteraction(event, d);
+            }
+          )
+          .on("mouseleave", (event) => {
+            d3.selectAll(".marker-point")
+              .transition()
+              .duration(200)
+              .attr("r", 6);
+            handleMarkerInteraction(event, null);
           })
-          .attr("cy", (d) => {
-            const coords = projection([d.location.lng, d.location.lat]);
-            return coords ? coords[1] : 0;
-          })
-          .attr("r", 4)
-          .attr("fill", "rgba(147, 180, 224, 0.95)")
-          .attr("stroke", theme.background)
-          .attr("stroke-width", 1.5)
-          .style("cursor", "pointer")
-          .on("mouseenter", (_event, d) => {
-            const [x, y] = projection([d.location.lng, d.location.lat])!;
-            onHover(d, x, y - 30);
-          })
-          .on("mouseleave", () => onHover(null, 0, 0));
+          .on(
+            "touchstart",
+            function (
+              this: SVGCircleElement,
+              event: TouchEvent,
+              d: TripLocation
+            ) {
+              event.preventDefault();
+              d3.select(this.parentElement as Element)
+                .raise()
+                .select(".marker-point")
+                .transition()
+                .duration(200)
+                .attr("r", 8);
+              handleMarkerInteraction(event, d);
+            }
+          );
+
+        // Initial zoom for both mobile and desktop
+        const initialScale = width <= 768 ? 1.2 : 1;
+        const initialX = width <= 768 ? width * 0.1 : 0;
+        const initialY = width <= 768 ? -height * 0.1 : 0;
+
+        svg.call(
+          zoom.transform,
+          d3.zoomIdentity.translate(initialX, initialY).scale(initialScale)
+        );
       });
 
-    // Cleanup function
     return () => {
       svg.selectAll("*").remove();
       svg.on(".zoom", null);
     };
-  }, [width, height, theme, locations, onHover]);
+  }, [
+    width,
+    height,
+    theme,
+    locations,
+    setupProjection,
+    handleMarkerInteraction,
+  ]);
 
   return (
-    <svg
-      ref={svgRef}
-      width={width}
-      height={height}
-      style={{ background: "transparent" }}
-    />
+    <div className="map-wrapper">
+      <svg ref={mapRef} width={width} height={height} className="map" />
+      {activeTrip && (
+        <TripCard
+          trip={activeTrip.trip}
+          position={activeTrip.position}
+          onHide={() => setActiveTrip(null)}
+        />
+      )}
+    </div>
   );
 }
 

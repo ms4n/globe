@@ -3,8 +3,7 @@ import { Map as MapIcon } from "lucide-react";
 import { HiOutlineGlobeAlt } from "react-icons/hi";
 import Earth from "./components/Earth";
 import Map from "./components/Map";
-import TripCard from "./components/TripCard";
-import tripLocations, { TripLocation } from "./data/locations";
+import tripLocations from "./data/locations";
 import "./App.css";
 
 function App() {
@@ -12,12 +11,7 @@ function App() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  const [activeLocation, setActiveLocation] = useState<TripLocation | null>(
-    null
-  );
-  const [cardPosition, setCardPosition] = useState({ x: 0, y: 0 });
   const [showGlobe, setShowGlobe] = useState(true);
-
 
   // Memoize theme to prevent recreation on every render
   const theme = useMemo(
@@ -43,13 +37,6 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleHover = (trip: TripLocation | null, x: number, y: number) => {
-    setActiveLocation(trip);
-    if (trip) {
-      setCardPosition({ x, y });
-    }
-  };
-
   return (
     <>
       <img src="/supersquad.svg" alt="SuperSquad" className="logo" />
@@ -70,12 +57,8 @@ function App() {
             width={dimensions.width}
             height={dimensions.height}
             theme={theme}
-            onHover={handleHover}
             locations={tripLocations}
           />
-          {activeLocation && (
-            <TripCard trip={activeLocation} position={cardPosition} />
-          )}
         </div>
       )}
     </>

@@ -224,3 +224,77 @@ html {
   margin: 0;
   font-weight: 400;
 }
+
+/* Map Styles */
+.map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+/* Marker Styles */
+.marker-group {
+  cursor: pointer;
+}
+
+.marker-pulse {
+  fill: none;
+  stroke: rgba(147, 180, 224, 0.4);
+  stroke-width: 2;
+  animation: pulse 2s ease-out infinite;
+}
+
+.marker-point {
+  fill: rgba(147, 180, 224, 0.95);
+  stroke: #0a0c12;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 10px rgba(147, 180, 224, 0.3));
+  transition: all 0.2s ease-out;
+}
+
+.marker-point:hover {
+  fill: rgba(147, 180, 224, 1);
+  filter: drop-shadow(0 0 15px rgba(147, 180, 224, 0.5));
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Trip Card Styles */
+.trip-card {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  transform-origin: top left;
+  animation: cardAppear 0.2s ease-out forwards;
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
