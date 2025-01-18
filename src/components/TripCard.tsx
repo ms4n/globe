@@ -5,9 +5,15 @@ interface TripCardProps {
   trip: TripLocation;
   position: { x: number; y: number };
   onHide?: () => void;
+  isVisible?: boolean;
 }
 
-function TripCard({ trip, position, onHide }: TripCardProps) {
+function TripCard({
+  trip,
+  position,
+  onHide,
+  isVisible: controlledVisible,
+}: TripCardProps) {
   const [adjustedPosition, setAdjustedPosition] = useState(position);
   const [isVisible, setIsVisible] = useState(true);
   const [shouldRender, setShouldRender] = useState(true);
@@ -18,16 +24,20 @@ function TripCard({ trip, position, onHide }: TripCardProps) {
   }, [trip]); // Reset visibility when trip changes
 
   useEffect(() => {
-    const hideTimer = setTimeout(() => {
-      setIsVisible(false);
-    }, 2500); // Start fade out after 2.5 seconds
+    // Only use auto-hide timer if isVisible prop is not provided
+    if (controlledVisible === undefined) {
+      const hideTimer = setTimeout(() => {
+        setIsVisible(false);
+      }, 2500); // Start fade out after 2.5 seconds
 
-    return () => clearTimeout(hideTimer);
-  }, [trip]);
+      return () => clearTimeout(hideTimer);
+    }
+  }, [trip, controlledVisible]);
 
   // Handle transition end
   useEffect(() => {
-    if (!isVisible) {
+    const currentVisibility = controlledVisible ?? isVisible;
+    if (!currentVisibility) {
       const transitionTimer = setTimeout(() => {
         setShouldRender(false);
         onHide?.();
@@ -35,12 +45,13 @@ function TripCard({ trip, position, onHide }: TripCardProps) {
 
       return () => clearTimeout(transitionTimer);
     }
-  }, [isVisible, onHide]);
+  }, [isVisible, onHide, controlledVisible]);
 
   useEffect(() => {
     // Get viewport dimensions
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
+    const isMobile = viewportWidth <= 768;
 
     // Get card dimensions after it's rendered
     const card = document.querySelector(".trip-card") as HTMLElement;
@@ -54,14 +65,24 @@ function TripCard({ trip, position, onHide }: TripCardProps) {
     let adjustedX = position.x;
     let adjustedY = position.y;
 
-    // Adjust X if card would go off right edge
-    if (position.x + cardWidth > viewportWidth) {
-      adjustedX = position.x - cardWidth - 40;
-    }
-
-    // Adjust Y if card would go off bottom edge
-    if (position.y + cardHeight > viewportHeight) {
-      adjustedY = viewportHeight - cardHeight - 20;
+    if (isMobile) {
+      // Center horizontally on mobile
+      adjustedX = Math.max(
+        20,
+        Math.min(viewportWidth - cardWidth - 20, adjustedX)
+      );
+      // Prefer showing below the point on mobile, but flip up if not enough space
+      if (position.y + cardHeight > viewportHeight - 20) {
+        adjustedY = position.y - cardHeight - 20;
+      }
+    } else {
+      // Desktop positioning
+      if (position.x + cardWidth > viewportWidth) {
+        adjustedX = position.x - cardWidth - 40;
+      }
+      if (position.y + cardHeight > viewportHeight) {
+        adjustedY = viewportHeight - cardHeight - 20;
+      }
     }
 
     // Ensure card doesn't go off left or top edge
@@ -72,6 +93,8 @@ function TripCard({ trip, position, onHide }: TripCardProps) {
   }, [position]);
 
   if (!shouldRender) return null;
+
+  const currentVisibility = controlledVisible ?? isVisible;
 
   return (
     <div
@@ -89,9 +112,11 @@ function TripCard({ trip, position, onHide }: TripCardProps) {
         color: "white",
         fontSize: "14px",
         maxWidth: "280px",
-        opacity: isVisible ? 1 : 0,
-        transition: "opacity 0.2s ease-out",
+        opacity: currentVisibility ? 1 : 0,
+        transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         pointerEvents: "none",
+        transform: `scale(${currentVisibility ? 1 : 0.98})`,
+        transformOrigin: "center",
       }}
     >
       <div

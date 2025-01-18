@@ -16,6 +16,8 @@ function Earth({ locations }: EarthProps) {
     null
   );
   const [cardPosition, setCardPosition] = useState({ x: 0, y: 0 });
+  const [isCardVisible, setIsCardVisible] = useState(false);
+  const [shouldRenderCard, setShouldRenderCard] = useState(false);
 
   // Calculate center of markers
   const centerPoint = useMemo(() => {
@@ -38,6 +40,31 @@ function Earth({ locations }: EarthProps) {
     centerPoint.lat,
     0,
   ];
+
+  useEffect(() => {
+    if (activeLocation) {
+      setIsCardVisible(true);
+      setShouldRenderCard(true);
+      // Start fade out timer
+      const hideTimer = setTimeout(() => {
+        setIsCardVisible(false);
+      }, 2500); // Hide after 2.5 seconds
+
+      return () => clearTimeout(hideTimer);
+    }
+  }, [activeLocation]);
+
+  // Handle card transition end and cleanup
+  useEffect(() => {
+    if (!isCardVisible && shouldRenderCard) {
+      const transitionTimer = setTimeout(() => {
+        setShouldRenderCard(false);
+        setActiveLocation(null);
+      }, 400); // Increased from 200ms to 400ms to match new transition duration
+
+      return () => clearTimeout(transitionTimer);
+    }
+  }, [isCardVisible]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -196,9 +223,14 @@ function Earth({ locations }: EarthProps) {
     });
 
     // Handle mouse events
-    const handleMouseMove = (event: MouseEvent) => {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const handleMouseMove = (event: MouseEvent | TouchEvent) => {
+      const clientX =
+        "touches" in event ? event.touches[0].clientX : event.clientX;
+      const clientY =
+        "touches" in event ? event.touches[0].clientY : event.clientY;
+
+      mouse.x = (clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(sprites);
@@ -209,8 +241,16 @@ function Earth({ locations }: EarthProps) {
 
         hitSprite.scale.set(0.25, 0.25, 1);
         (hitSprite.material as THREE.SpriteMaterial).opacity = 0.9;
+
+        // Reset any existing fade out timer by setting new active location
         setActiveLocation(trip);
-        setCardPosition({ x: event.clientX + 20, y: event.clientY - 20 });
+
+        // Adjust card position based on screen width
+        const isMobile = window.innerWidth <= 768;
+        setCardPosition({
+          x: isMobile ? clientX - 140 : clientX + 20,
+          y: isMobile ? clientY + 20 : clientY - 20,
+        });
 
         // Reset other sprites
         sprites.forEach((s) => {
@@ -225,13 +265,20 @@ function Earth({ locations }: EarthProps) {
           sprite.scale.set(0.15, 0.15, 1);
           (sprite.material as THREE.SpriteMaterial).opacity = 0.7;
         });
-        setActiveLocation(null);
+        setIsCardVisible(false);
       }
     };
 
-    const handleClick = (event: MouseEvent) => {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const handleClick = (event: MouseEvent | TouchEvent) => {
+      event.preventDefault(); // Prevent double-firing on mobile
+
+      const clientX =
+        "touches" in event ? event.touches[0].clientX : event.clientX;
+      const clientY =
+        "touches" in event ? event.touches[0].clientY : event.clientY;
+
+      mouse.x = (clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(sprites);
@@ -239,10 +286,24 @@ function Earth({ locations }: EarthProps) {
       if (intersects.length > 0) {
         const hitSprite = intersects[0].object as THREE.Sprite;
         const trip = hitSprite.userData.trip as TripLocation;
+        const isMobile = window.innerWidth <= 768;
         setActiveLocation(trip);
-        setCardPosition({ x: event.clientX + 20, y: event.clientY - 20 });
+        setCardPosition({
+          x: isMobile ? clientX - 140 : clientX + 20,
+          y: isMobile ? clientY + 20 : clientY - 20,
+        });
       } else {
-        setActiveLocation(null);
+        setIsCardVisible(false);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      // Don't immediately hide on touch end to allow for reading
+      // Instead, start the fade timer
+      if (activeLocation) {
+        setTimeout(() => {
+          setIsCardVisible(false);
+        }, 2500); // Match the auto-hide timer duration
       }
     };
 
@@ -251,11 +312,26 @@ function Earth({ locations }: EarthProps) {
         sprite.scale.set(0.15, 0.15, 1);
         (sprite.material as THREE.SpriteMaterial).opacity = 0.7;
       });
-      setActiveLocation(null);
+      setIsCardVisible(false);
     };
 
-    containerRef.current.addEventListener("mousemove", handleMouseMove);
-    containerRef.current.addEventListener("click", handleClick);
+    containerRef.current.addEventListener(
+      "mousemove",
+      handleMouseMove as EventListener
+    );
+    containerRef.current.addEventListener(
+      "click",
+      handleClick as EventListener
+    );
+    containerRef.current.addEventListener(
+      "touchstart",
+      handleClick as EventListener
+    );
+    containerRef.current.addEventListener(
+      "touchmove",
+      handleMouseMove as EventListener
+    );
+    containerRef.current.addEventListener("touchend", handleTouchEnd);
     containerRef.current.addEventListener("mouseleave", handleMouseLeave);
 
     // Handle window resize
@@ -325,8 +401,23 @@ function Earth({ locations }: EarthProps) {
     return () => {
       window.removeEventListener("resize", handleResize);
       if (containerRef.current) {
-        containerRef.current.removeEventListener("mousemove", handleMouseMove);
-        containerRef.current.removeEventListener("click", handleClick);
+        containerRef.current.removeEventListener(
+          "mousemove",
+          handleMouseMove as EventListener
+        );
+        containerRef.current.removeEventListener(
+          "click",
+          handleClick as EventListener
+        );
+        containerRef.current.removeEventListener(
+          "touchstart",
+          handleClick as EventListener
+        );
+        containerRef.current.removeEventListener(
+          "touchmove",
+          handleMouseMove as EventListener
+        );
+        containerRef.current.removeEventListener("touchend", handleTouchEnd);
         containerRef.current.removeEventListener(
           "mouseleave",
           handleMouseLeave
@@ -340,11 +431,12 @@ function Earth({ locations }: EarthProps) {
 
   return (
     <div ref={containerRef} className="earth-container">
-      {activeLocation && (
+      {shouldRenderCard && activeLocation && (
         <TripCard
           trip={activeLocation}
           position={cardPosition}
-          onHide={() => setActiveLocation(null)}
+          onHide={() => setIsCardVisible(false)}
+          isVisible={isCardVisible}
         />
       )}
     </div>

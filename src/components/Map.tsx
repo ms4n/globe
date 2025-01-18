@@ -40,9 +40,13 @@ function Map({ width, height, theme, locations }: MapProps) {
       if (trip) {
         const { clientX, clientY } =
           event instanceof TouchEvent ? event.touches[0] : event;
+        const isMobile = window.innerWidth <= 768;
         setActiveTrip({
           trip,
-          position: { x: clientX + 20, y: clientY - 20 },
+          position: {
+            x: isMobile ? clientX - 140 : clientX + 20,
+            y: isMobile ? clientY + 20 : clientY - 20,
+          },
         });
       } else {
         setActiveTrip(null);
