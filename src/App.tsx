@@ -18,7 +18,7 @@ function App() {
     height: window.innerHeight,
   });
   const [activeLocation, setActiveLocation] = useState<Location | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const isMobile = window.innerWidth <= 768;
 
   // Memoize theme to prevent recreation on every render
