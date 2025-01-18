@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Map as MapIcon } from "lucide-react";
 import { HiOutlineGlobeAlt } from "react-icons/hi";
-import { Info } from "lucide-react";
 import Earth from "./components/Earth";
 import Map from "./components/Map";
 import tripLocations from "./data/locations";
