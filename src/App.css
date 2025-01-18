@@ -8,14 +8,41 @@
 }
 
 .logo {
-  position: absolute;
-  top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  width: 220px;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 150px;
   height: auto;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  z-index: 1000;
+}
+
+.logo.dark {
+  filter: brightness(0) invert(1) sepia(100%) saturate(500%) hue-rotate(60deg);
+}
+
+.logo.light {
+  filter: brightness(0) sepia(100%) saturate(500%) hue-rotate(60deg);
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: transparent;
+  border: 1px solid rgba(154, 234, 116, 0.3);
+  color: #9aea74;
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.theme-toggle:hover {
+  background: rgba(154, 234, 116, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -92,4 +119,81 @@ div[style*="position: absolute"] > div {
   letter-spacing: 0.3px !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.map-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Location marker glow */
+circle {
+  transition: all 0.2s ease;
+}
+
+circle:hover {
+  r: 6px;
+}
+
+.dark circle {
+  filter: drop-shadow(0 0 6px rgba(154, 234, 116, 0.4));
+}
+
+.dark circle:hover {
+  filter: drop-shadow(0 0 12px rgba(154, 234, 116, 0.6));
+}
+
+.light circle {
+  filter: drop-shadow(0 0 6px rgba(154, 234, 116, 0.3));
+}
+
+.light circle:hover {
+  filter: drop-shadow(0 0 12px rgba(154, 234, 116, 0.5));
+}
+
+/* Location pill tooltip */
+.location-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(0, 0);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+  z-index: 1000;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.location-pill.dark {
+  background: rgba(25, 25, 25, 0.95);
+  color: #9aea74;
+  box-shadow: 0 0 15px rgba(154, 234, 116, 0.15), 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(154, 234, 116, 0.2);
+}
+
+.location-pill.light {
+  background: rgba(255, 255, 255, 0.95);
+  color: #2d7816;
+  box-shadow: 0 0 15px rgba(154, 234, 116, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(154, 234, 116, 0.3);
+}
+
+.location-pill.visible {
+  opacity: 1;
+}
+
+/* Reset default margins and padding */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
 }
