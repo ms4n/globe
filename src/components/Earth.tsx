@@ -192,8 +192,8 @@ function Earth({ locations }: EarthProps) {
       const phi = (90 - lat) * (Math.PI / 180);
       const theta = (lng + 180) * (Math.PI / 180);
 
-      // Add a small offset (1.5% of radius) to position markers above the surface
-      const markerRadius = radius * 1.015;
+      // Increase offset to 3.5% of radius to ensure markers are clearly above surface
+      const markerRadius = radius * 1.035;
       const x = -(markerRadius * Math.sin(phi) * Math.cos(theta));
       const y = markerRadius * Math.cos(phi);
       const z = markerRadius * Math.sin(phi) * Math.sin(theta);
@@ -210,15 +210,16 @@ function Earth({ locations }: EarthProps) {
       });
 
       const sprite = new THREE.Sprite(spriteMaterial);
-      sprite.scale.set(0.15, 0.15, 1);
+      // Slightly increase base scale for better visibility
+      sprite.scale.set(0.2, 0.2, 1);
       sprite.position.set(x, y, z);
       sprite.userData = { trip }; // Store trip data in the sprite
       earth.add(sprite);
       sprites.push(sprite);
 
-      // Add pulsing animation
+      // Add pulsing animation with adjusted scale range
       const pulseGlow = () => {
-        const scale = 0.15 + Math.sin(Date.now() * 0.003) * 0.02;
+        const scale = 0.2 + Math.sin(Date.now() * 0.003) * 0.03;
         sprite.scale.set(scale, scale, 1);
         requestAnimationFrame(pulseGlow);
       };
@@ -242,7 +243,8 @@ function Earth({ locations }: EarthProps) {
         const hitSprite = intersects[0].object as THREE.Sprite;
         const trip = hitSprite.userData.trip as TripLocation;
 
-        hitSprite.scale.set(0.25, 0.25, 1);
+        // Increase hover scale proportionally
+        hitSprite.scale.set(0.3, 0.3, 1);
         (hitSprite.material as THREE.SpriteMaterial).opacity = 0.9;
 
         // Reset any existing fade out timer by setting new active location
@@ -255,17 +257,17 @@ function Earth({ locations }: EarthProps) {
           y: isMobile ? clientY + 20 : clientY - 20,
         });
 
-        // Reset other sprites
+        // Reset other sprites with base scale
         sprites.forEach((s) => {
           if (s !== hitSprite) {
-            s.scale.set(0.15, 0.15, 1);
+            s.scale.set(0.2, 0.2, 1);
             (s.material as THREE.SpriteMaterial).opacity = 0.7;
           }
         });
       } else {
-        // Reset all sprites when no hit
+        // Reset all sprites to base scale
         sprites.forEach((sprite) => {
-          sprite.scale.set(0.15, 0.15, 1);
+          sprite.scale.set(0.2, 0.2, 1);
           (sprite.material as THREE.SpriteMaterial).opacity = 0.7;
         });
         setIsCardVisible(false);
@@ -312,7 +314,7 @@ function Earth({ locations }: EarthProps) {
 
     const handleMouseLeave = () => {
       sprites.forEach((sprite) => {
-        sprite.scale.set(0.15, 0.15, 1);
+        sprite.scale.set(0.2, 0.2, 1);
         (sprite.material as THREE.SpriteMaterial).opacity = 0.7;
       });
       setIsCardVisible(false);
@@ -402,8 +404,8 @@ function Earth({ locations }: EarthProps) {
         const toSprite = spritePosition.sub(cameraPosition).normalize();
         const angle = toEarth.angleTo(toSprite);
 
-        // If angle is less than 90 degrees, sprite is on the visible side
-        const isVisible = angle < Math.PI / 2;
+        // Make visibility check more conservative (80 degrees instead of 90)
+        const isVisible = angle < (Math.PI / 2) * 0.89;
         sprite.visible = isVisible;
         if (isVisible) {
           const material = sprite.material as THREE.SpriteMaterial;
