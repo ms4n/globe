@@ -318,7 +318,7 @@ html {
   }
 
   .takeover-text {
-    top: 75px;
+    top: 72px;
   }
 }
 
@@ -348,7 +348,7 @@ html {
 
 @media (max-width: 768px) {
   .info-message {
-    bottom: 60px;
+    bottom: 50px;
     top: auto;
     font-size: 13px;
     padding: 6px 12px;
