@@ -196,7 +196,7 @@ function App() {
           .join("circle")
           .attr("cx", (d) => projection([d.lng, d.lat])![0])
           .attr("cy", (d) => projection([d.lng, d.lat])![1])
-          .attr("r", 4)
+          .attr("r", 3)
           .attr("fill", "#9AEA74")
           .attr("stroke", theme.background)
           .attr("stroke-width", 1)
