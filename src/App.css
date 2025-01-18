@@ -298,3 +298,59 @@ html {
     transform: scale(1);
   }
 }
+
+.takeover-text {
+  position: fixed;
+  top: 65px;
+  left: 20px;
+  font-family: "League Spartan", sans-serif;
+  font-weight: 300;
+  font-size: 24px;
+  color: white;
+  letter-spacing: 2px;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .logo {
+    width: 180px;
+    top: 25px;
+  }
+
+  .takeover-text {
+    top: 75px;
+  }
+}
+
+.info-message {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26, 29, 36, 0.8);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+.info-message svg {
+  opacity: 0.9;
+  color: rgba(147, 180, 224, 0.95);
+}
+
+@media (max-width: 768px) {
+  .info-message {
+    bottom: 60px;
+    top: auto;
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+}

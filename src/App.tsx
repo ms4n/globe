@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Map as MapIcon } from "lucide-react";
 import { HiOutlineGlobeAlt } from "react-icons/hi";
+import { Info } from "lucide-react";
 import Earth from "./components/Earth";
 import Map from "./components/Map";
 import tripLocations from "./data/locations";
@@ -12,6 +13,7 @@ function App() {
     height: window.innerHeight,
   });
   const [showGlobe, setShowGlobe] = useState(true);
+  const isMobile = dimensions.width <= 768;
 
   // Memoize theme to prevent recreation on every render
   const theme = useMemo(
@@ -37,9 +39,14 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const helperText = isMobile
+    ? "Tap on points to explore destinations"
+    : "Hover over points to explore destinations";
+
   return (
     <>
       <img src="/supersquad.svg" alt="SuperSquad" className="logo" />
+      <div className="takeover-text">TAKEOVER</div>
       <div className="controls">
         <button
           className="view-toggle"
@@ -50,7 +57,12 @@ function App() {
         </button>
       </div>
       {showGlobe ? (
-        <Earth locations={tripLocations} />
+        <>
+          <Earth locations={tripLocations} />
+          <div className="info-message">
+            <span>{helperText}</span>
+          </div>
+        </>
       ) : (
         <div className="map-container">
           <Map

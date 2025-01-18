@@ -191,9 +191,12 @@ function Earth({ locations }: EarthProps) {
       // Convert latitude and longitude to 3D position
       const phi = (90 - lat) * (Math.PI / 180);
       const theta = (lng + 180) * (Math.PI / 180);
-      const x = -(radius * Math.sin(phi) * Math.cos(theta));
-      const y = radius * Math.cos(phi);
-      const z = radius * Math.sin(phi) * Math.sin(theta);
+
+      // Add a small offset (1.5% of radius) to position markers above the surface
+      const markerRadius = radius * 1.015;
+      const x = -(markerRadius * Math.sin(phi) * Math.cos(theta));
+      const y = markerRadius * Math.cos(phi);
+      const z = markerRadius * Math.sin(phi) * Math.sin(theta);
 
       // Create glow effect using sprite
       const spriteMaterial = new THREE.SpriteMaterial({
@@ -201,8 +204,8 @@ function Earth({ locations }: EarthProps) {
         color: 0x93b4e0,
         transparent: true,
         opacity: 0.7,
-        depthWrite: false,
-        depthTest: false,
+        depthWrite: true,
+        depthTest: true,
         blending: THREE.AdditiveBlending,
       });
 
@@ -387,6 +390,26 @@ function Earth({ locations }: EarthProps) {
         const scale = initialScale.clone().lerp(targetScale, easeOutCubic);
         earth.scale.copy(scale);
       }
+
+      // Update sprite visibility based on camera position
+      sprites.forEach((sprite) => {
+        const spritePosition = sprite.position.clone();
+        const cameraPosition = camera.position.clone();
+        const earthPosition = earth.position.clone();
+
+        // Calculate the angle between camera-to-earth center and camera-to-sprite
+        const toEarth = earthPosition.sub(cameraPosition).normalize();
+        const toSprite = spritePosition.sub(cameraPosition).normalize();
+        const angle = toEarth.angleTo(toSprite);
+
+        // If angle is less than 90 degrees, sprite is on the visible side
+        const isVisible = angle < Math.PI / 2;
+        sprite.visible = isVisible;
+        if (isVisible) {
+          const material = sprite.material as THREE.SpriteMaterial;
+          material.opacity = 0.7;
+        }
+      });
 
       // Slowly rotate stars
       stars.rotation.y += 0.0001;
